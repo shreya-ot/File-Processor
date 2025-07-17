@@ -5,7 +5,6 @@ from PIL import Image
 import pytesseract
 from pdf2image import convert_from_path
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 import google.generativeai as genai
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
@@ -38,7 +37,7 @@ vectorstore = None
 @app.post("/upload/")
 async def upload_file(file: UploadFile = File(...)):
     global text, vectorstore
-    text = ""  # Reset text for each new file upload
+    text = ""  
     newdir = "files"
     if not os.path.exists(newdir):
         os.makedirs(newdir)
@@ -70,7 +69,6 @@ def chunk_vector(text):
     vectorstore = Chroma.from_documents(
     documents=chunks,
     embedding=embeddings)
-    print("Vectorstore created with chunks of text.")  # Debugging line
     return vectorstore
 
 @app.post("/chat/")
@@ -81,11 +79,10 @@ def qna(question: Question):
     global vectorstore, text
     if vectorstore is None:
         vectorstore = chunk_vector(text)
-    print("Vectorstore created with text:", text[:10])  # Debugging line to check text
     relevant = vectorstore.similarity_search(q, k=3) 
-    print(relevant)
+    print(relevant) #optional debug print
     context = "\n".join([doc.page_content for doc in relevant])
-    print(context)
+    print(context) #optional debug print
     llm = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash",
     google_api_key=API_KEY,
